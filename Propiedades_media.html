@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propiedades de la media</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: una columna de láminas oscuras (estilo pizarra), datos compartidos arriba y una lámina por proposición. */
+:root{
+  --fondo:#0F1720; --panel:#16202C; --panel2:#1C2836; --rejilla:#384250;
+  --tiza:#ECE8E0; --tenue:#A9A6BC; --gris:#8B8AA6;
+  --amarillo:#F4D35E; --rojo:#FC6255; --azul:#58C4DD; --verde:#83C167; --violeta:#B48EDD; --naranja:#F79B5C;
+  --f-mat:"STIX Two Text","Cambria Math",Georgia,serif;
+  --f-txt:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-num:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--fondo);color:var(--tiza)}
+body{font-family:var(--f-txt);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header h1{font-family:var(--f-mat);font-weight:600;font-size:clamp(26px,4vw,38px);margin:0;text-wrap:balance;letter-spacing:.01em}
+header p{margin:.35em 0 0;color:var(--tenue);max-width:68ch}
+.m{font-family:var(--f-mat);font-style:italic;white-space:nowrap}
+.m .r{font-style:normal}
+sub{font-size:.72em}
+.lamina{background:var(--panel);border-radius:12px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.cab h2{font-family:var(--f-mat);font-weight:600;font-size:19px;margin:0;color:var(--tiza)}
+.etiqueta{font-family:var(--f-num);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--amarillo);border:1px solid color-mix(in srgb,var(--amarillo) 45%,transparent);border-radius:999px;padding:1px 9px}
+.enunciado{font-family:var(--f-mat);font-size:17px;color:var(--tiza);margin:0}
+.enunciado .m{font-size:1.05em}
+.nota{color:var(--tenue);font-size:13.5px;margin:0;max-width:80ch}
+canvas{display:block;width:100%;border-radius:8px;background:var(--panel2);touch-action:pan-y;cursor:crosshair}
+.lectura{font-family:var(--f-num);font-size:13px;color:var(--tenue);display:flex;flex-wrap:wrap;gap:4px 18px;font-variant-numeric:tabular-nums}
+.lectura b{color:var(--tiza);font-weight:500}
+.ok{color:var(--verde)!important}.mal{color:var(--rojo)!important}
+.fila{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:600 13px var(--f-txt);color:var(--tiza);background:var(--panel2);border:1px solid var(--rejilla);border-radius:7px;padding:6px 11px;cursor:pointer}
+button:hover{border-color:var(--gris)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amarillo);outline-offset:2px}
+.chip{display:flex;align-items:center;gap:6px;background:var(--panel2);border:1px solid var(--rejilla);border-radius:999px;padding:3px 6px 3px 10px;font-family:var(--f-num);font-size:12.5px}
+.chip .pt{width:10px;height:10px;border-radius:50%}
+.chip button{padding:0 7px;border-radius:999px;font-size:13px;line-height:20px}
+.dos{display:grid;grid-template-columns:1.25fr 1fr;gap:12px}
+.dos>*{min-width:0}
+@media (max-width:760px){.dos{grid-template-columns:1fr}}
+.deslizador{display:flex;align-items:center;gap:10px;font-family:var(--f-num);font-size:13px;color:var(--tenue)}
+.deslizador input{flex:1;min-width:120px;accent-color:var(--amarillo)}
+.deslizador .m{font-size:16px;color:var(--tiza)}
+.ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px 22px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <h1>Propiedades de la media aritmética</h1>
+  <p>La media <span class="m">x̄ = <span class="r">Σ</span> f<sub>i</sub>x<sub>i</sub></span> es el punto de equilibrio de los datos cuando cada valor <span class="m">x<sub>i</sub></span> pesa su frecuencia relativa <span class="m">f<sub>i</sub></span>. Arrastra las pilas de puntos para mover los datos; las cuatro láminas usan los mismos datos.</p>
+</header>
+
+<section class="lamina" aria-labelledby="t0">
+  <div class="cab"><span class="etiqueta">Datos</span><h2 id="t0">Los datos y su punto de equilibrio</h2></div>
+  <canvas id="c0" height="190" aria-label="Diagrama de puntos de los datos con el punto de equilibrio en la media"></canvas>
+  <div class="fila" id="chips"></div>
+  <div class="fila">
+    <button id="bAdd">Añadir valor</button>
+    <button id="bRand">Datos aleatorios</button>
+    <button id="bIgual">Todos iguales</button>
+    <button id="bEj">Volver al ejemplo</button>
+  </div>
+  <div class="lectura" id="l0"></div>
+</section>
+
+<section class="lamina" aria-labelledby="t1">
+  <div class="cab"><span class="etiqueta">Proposición 1.5.1</span><h2 id="t1">La media está entre los extremos</h2></div>
+  <p class="enunciado">Si la variable toma al menos dos valores distintos, <span class="m">x<sub>1</sub> &lt; x<sub>k</sub> ⟹ x<sub>1</sub> &lt; x̄ &lt; x<sub>k</sub></span>.</p>
+  <canvas id="c1" height="300" aria-label="Rango de los datos y dos barras de aportaciones que terminan en la media"></canvas>
+  <p class="nota">Las aportaciones <span class="m">f<sub>i</sub>(x<sub>i</sub> − x<sub>1</sub>)</span> se colocan una tras otra desde <span class="m">x<sub>1</sub></span> y terminan exactamente en <span class="m">x̄</span>; las aportaciones <span class="m">f<sub>i</sub>(x<sub>k</sub> − x<sub>i</sub>)</span> hacen lo mismo desde <span class="m">x<sub>k</sub></span>. Ninguna es negativa y la de <span class="m">x<sub>k</sub></span> (o la de <span class="m">x<sub>1</sub></span>) es positiva, así que la media no puede tocar los extremos.</p>
+  <div class="lectura" id="l1"></div>
+</section>
+
+<section class="lamina" aria-labelledby="t2">
+  <div class="cab"><span class="etiqueta">Proposición 1.5.2</span><h2 id="t2">Las desviaciones se compensan</h2></div>
+  <p class="enunciado"><span class="m"><span class="r">Σ</span> n<sub>i</sub>(x<sub>i</sub> − x̄) = <span class="r">Σ</span> f<sub>i</sub>(x<sub>i</sub> − x̄) = 0</span></p>
+  <canvas id="c2" height="330" aria-label="Balancín apoyado en un punto p con las desviaciones de los datos"></canvas>
+  <div class="fila"><button id="bApoyo">Apoyar en x̄</button><span class="nota">Toca o arrastra en la lámina para mover el apoyo <span class="m">p</span>. El balancín gira según <span class="m"><span class="r">Σ</span> f<sub>i</sub>(x<sub>i</sub> − p) = x̄ − p</span>.</span></div>
+  <div class="lectura" id="l2"></div>
+</section>
+
+<section class="lamina" aria-labelledby="t3">
+  <div class="cab"><span class="etiqueta">Proposición 1.5.3</span><h2 id="t3">La media sigue a las transformaciones afines</h2></div>
+  <p class="enunciado"><span class="m">y<sub>i</sub> = a x<sub>i</sub> + b ⟹ ȳ = a x̄ + b</span></p>
+  <div class="ctrl">
+    <label class="deslizador" for="sa"><span class="m">a</span><input id="sa" type="range" min="-2" max="2" step="0.05" value="1.5"><span id="va">1,50</span></label>
+    <label class="deslizador" for="sb"><span class="m">b</span><input id="sb" type="range" min="-8" max="8" step="0.1" value="1"><span id="vb">1,0</span></label>
+  </div>
+  <canvas id="c3" height="360" aria-label="Dos ejes paralelos unidos por la transformación afín"></canvas>
+  <p class="nota">Con los dos ejes a la misma escala, las rectas que unen cada <span class="m">x</span> con <span class="m">ax + b</span> pasan todas por un mismo punto, el centro de la homotecia <span class="m">c = b/(1 − a)</span>. La de la media también: la transformación arrastra el punto de equilibrio. Con <span class="m">a = 1</span> son paralelas (traslación) y con <span class="m">a &lt; 0</span> se cruzan entre los ejes (el orden se invierte).</p>
+  <div class="lectura" id="l3"></div>
+</section>
+
+<section class="lamina" aria-labelledby="t4">
+  <div class="cab"><span class="etiqueta">Proposición 1.5.4</span><h2 id="t4">La media minimiza los cuadrados de las desviaciones</h2></div>
+  <p class="enunciado"><span class="m"><span class="r">Σ</span> f<sub>i</sub>(x<sub>i</sub> − x̄)² &lt; <span class="r">Σ</span> f<sub>i</sub>(x<sub>i</sub> − a)²</span> para todo <span class="m">a ≠ x̄</span></p>
+  <div class="dos">
+    <canvas id="c4" height="380" aria-label="Cuadrados de lado la distancia de cada dato al punto a"></canvas>
+    <canvas id="c5" height="380" aria-label="Parábola de la media de los cuadrados en función de a"></canvas>
+  </div>
+  <div class="fila"><button id="bMin">Llevar a hasta x̄</button><span class="nota">Toca o arrastra en cualquiera de las dos láminas para mover <span class="m">a</span>. A la derecha: <span class="m">M(a) = s² + (a − x̄)²</span>, una parábola con mínimo en <span class="m">x̄</span>.</span></div>
+  <div class="lectura" id="l4"></div>
+</section>
+</div>
+
+<script>
+(()=>{
+const css=getComputedStyle(document.documentElement);
+const C=n=>css.getPropertyValue('--'+n).trim();
+const COL={tiza:C('tiza'),tenue:C('tenue'),gris:C('gris'),rejilla:C('rejilla'),amarillo:C('amarillo'),rojo:C('rojo'),azul:C('azul'),verde:C('verde'),panel2:C('panel2'),fondo:C('fondo')};
+const PAL=[C('azul'),C('verde'),C('rojo'),C('violeta'),C('naranja'),'#E58FB6','#7FD8BE'];
+const FM='"STIX Two Text",Georgia,serif', FN='"JetBrains Mono",monospace';
+const fmt=(v,d=2)=>(Math.abs(v)<5e-13?0:v).toFixed(d).replace('.',',').replace(/^-/,'−');
+
+// ---------- estado ----------
+const EJEMPLO=[{x:1.5,n:2},{x:3,n:3},{x:4.2,n:1},{x:7.5,n:2}];
+let S={pts:EJEMPLO.map(p=>({...p})), p:3.4, a:7.2, ta:1.5, tb:1, theta:0};
+let animA=null;
+function st(){
+  const pts=S.pts, N=pts.reduce((s,p)=>s+p.n,0);
+  const f=pts.map(p=>p.n/N);
+  const m=pts.reduce((s,p,i)=>s+f[i]*p.x,0);
+  const v=pts.reduce((s,p,i)=>s+f[i]*(p.x-m)**2,0);
+  const xs=pts.map(p=>p.x);
+  return {N,f,m,v,lo:Math.min(...xs),hi:Math.max(...xs)};
+}
+const colorOf=i=>PAL[i%PAL.length];
+
+// ---------- lienzos ----------
+const defs=[];
+function lienzo(id,draw,hit,drag){
+  const el=document.getElementById(id), d={el,draw,hit,drag,ctx:el.getContext('2d'),w:0,h:0};
+  d.H=+el.getAttribute('height');
+  defs.push(d);
+  el.addEventListener('pointerdown',e=>{
+    const r=el.getBoundingClientRect(), px=e.clientX-r.left, py=e.clientY-r.top;
+    const t=d.hit&&d.hit(px,py); if(!t) return;
+    e.preventDefault(); el.setPointerCapture(e.pointerId); d.target=t; d.drag(t,px,py); pinta();
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!d.target) return; const r=el.getBoundingClientRect();
+    d.drag(d.target,e.clientX-r.left,e.clientY-r.top); pinta();
+  });
+  const fin=()=>{d.target=null};
+  el.addEventListener('pointerup',fin); el.addEventListener('pointercancel',fin);
+  return d;
+}
+function ajusta(d){
+  const dpr=window.devicePixelRatio||1, w=d.el.clientWidth, h=d.H;
+  if(w!==d.w){d.w=w;d.h=h;d.el.width=Math.round(w*dpr);d.el.height=Math.round(h*dpr);d.el.style.height=h+'px';}
+  d.ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function escala(d,lo,hi,padL=34,padR=34){
+  const a=padL,b=d.w-padR;
+  d.X=v=>a+(v-lo)/(hi-lo)*(b-a); d.iX=px=>lo+(px-a)/(b-a)*(hi-lo); d.k=(b-a)/(hi-lo);
+}
+// ---------- primitivas de dibujo ----------
+function txt(c,s,x,y,{col=COL.tiza,size=14,font=FM,ital=true,al='center',bl='middle'}={}){
+  c.font=`${ital?'italic ':''}${size}px ${font}`; c.fillStyle=col; c.textAlign=al; c.textBaseline=bl; c.fillText(s,x,y);
+}
+function linea(c,x1,y1,x2,y2,col,w=1,dash=null){c.beginPath();c.setLineDash(dash||[]);c.strokeStyle=col;c.lineWidth=w;c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);}
+function flecha(c,x1,y1,x2,y2,col,w=1.4,cab=7){
+  linea(c,x1,y1,x2,y2,col,w); const an=Math.atan2(y2-y1,x2-x1); if(Math.hypot(x2-x1,y2-y1)<2) return;
+  c.beginPath();c.fillStyle=col;c.moveTo(x2,y2);c.lineTo(x2-cab*Math.cos(an-0.42),y2-cab*Math.sin(an-0.42));c.lineTo(x2-cab*Math.cos(an+0.42),y2-cab*Math.sin(an+0.42));c.closePath();c.fill();
+}
+function eje(c,d,y,lo,hi,{paso=1,etq=true,col=COL.tenue}={}){
+  flecha(c,d.X(lo)-12,y,d.X(hi)+16,y,col,1.1,7);
+  const p0=Math.ceil(lo/paso)*paso;
+  for(let v=p0;v<=hi+1e-9;v+=paso){const x=d.X(v);linea(c,x,y-4,x,y+4,col,1);
+    if(etq) txt(c,fmt(v,Number.isInteger(paso)?0:1),x,y+15,{size:11,font:FN,ital:false,col:COL.gris});}
+}
+const R=6.5;
+function pila(c,x,y,n,col,dir=-1,r=R){
+  for(let j=0;j<n;j++){const cy=y+dir*(r+1.5+j*(2*r+1.5));
+    c.beginPath();c.arc(x,cy,r,0,7);c.fillStyle=col;c.fill();c.lineWidth=1;c.strokeStyle='rgba(236,232,224,.55)';c.stroke();}
+}
+function fulcro(c,x,y,col=COL.amarillo,h=15,dir=1){
+  c.beginPath();c.moveTo(x,y);c.lineTo(x-h*0.62,y+dir*h);c.lineTo(x+h*0.62,y+dir*h);c.closePath();c.fillStyle=col;c.fill();
+}
+function hitPila(d,px,py,yBase,dir=-1){
+  let best=null,bd=14;
+  S.pts.forEach((p,i)=>{const x=d.X(p.x); const top=yBase+dir*(p.n*(2*R+1.5)+6);
+    const y1=Math.min(yBase+8*(-dir),top), y2=Math.max(yBase+8*(-dir),top);
+    if(py>=y1-6&&py<=y2+6&&Math.abs(px-x)<bd){bd=Math.abs(px-x);best={t:'pt',i};}});
+  return best;
+}
+function mueve(d,t,px){const v=Math.round(Math.max(0,Math.min(10,d.iX(px)))*20)/20; S.pts[t.i].x=v; chips();}
+
+// ---------- 0: datos ----------
+const d0=lienzo('c0',(d,c)=>{
+  const s=st(); escala(d,0,10); const y=118;
+  eje(c,d,y,0,10);
+  linea(c,d.X(0),y,d.X(10),y,'rgba(236,232,224,.7)',2.2);
+  S.pts.forEach((p,i)=>pila(c,d.X(p.x),y,p.n,colorOf(i)));
+  fulcro(c,d.X(s.m),y+2,COL.amarillo,16);
+  txt(c,'x̄',d.X(s.m),y+34,{col:COL.amarillo,size:17});
+  txt(c,'arrastra una pila para mover su valor',d.w-12,16,{size:12,font:FN,ital:false,col:COL.gris,al:'right'});
+},(px,py)=>hitPila(d0,px,py,118),(t,px)=>mueve(d0,t,px));
+
+// ---------- 1: extremos ----------
+const d1=lienzo('c1',(d,c)=>{
+  const s=st(); escala(d,0,10); const y=126;
+  const igual=s.hi-s.lo<1e-9;
+  // banda del rango
+  c.fillStyle='rgba(88,196,221,.10)'; c.fillRect(d.X(s.lo),24,d.X(s.hi)-d.X(s.lo),y-24);
+  linea(c,d.X(s.lo),24,d.X(s.lo),y+40,'rgba(88,196,221,.75)',1,[4,3]);
+  linea(c,d.X(s.hi),24,d.X(s.hi),y+40,'rgba(88,196,221,.75)',1,[4,3]);
+  txt(c,'x',d.X(s.lo)-4,16,{col:COL.azul,size:16}); txt(c,'1',d.X(s.lo)+5,20,{col:COL.azul,size:11});
+  txt(c,'x',d.X(s.hi)-4,16,{col:COL.azul,size:16}); txt(c,'k',d.X(s.hi)+5,20,{col:COL.azul,size:11});
+  eje(c,d,y,0,10);
+  linea(c,d.X(0),y,d.X(10),y,'rgba(236,232,224,.7)',2.2);
+  S.pts.forEach((p,i)=>pila(c,d.X(p.x),y,p.n,colorOf(i)));
+  fulcro(c,d.X(s.m),y+2,COL.amarillo,15);
+  // barras de aportaciones
+  const order=S.pts.map((p,i)=>({...p,i,f:s.f[i]})).sort((u,v)=>u.x-v.x);
+  const yA=y+70, yB=y+118, hB=14;
+  let x=d.X(s.lo);
+  order.forEach(o=>{const L=o.f*(o.x-s.lo)*d.k; if(L>0.3){c.fillStyle=colorOf(o.i);c.globalAlpha=.85;c.fillRect(x,yA-hB/2,L,hB);c.globalAlpha=1;
+    c.strokeStyle=COL.panel2;c.lineWidth=1;c.strokeRect(x,yA-hB/2,L,hB);} x+=L;});
+  let xb=d.X(s.hi);
+  order.slice().reverse().forEach(o=>{const L=o.f*(s.hi-o.x)*d.k; if(L>0.3){c.fillStyle=colorOf(o.i);c.globalAlpha=.85;c.fillRect(xb-L,yB-hB/2,L,hB);c.globalAlpha=1;
+    c.strokeStyle=COL.panel2;c.lineWidth=1;c.strokeRect(xb-L,yB-hB/2,L,hB);} xb-=L;});
+  linea(c,d.X(s.m),y+16,d.X(s.m),yB+16,COL.amarillo,1.4,[5,3]);
+  // fantasmas: el máximo posible de cada barra
+  c.strokeStyle='rgba(169,166,188,.45)';c.setLineDash([3,3]);c.lineWidth=1;
+  c.strokeRect(d.X(s.lo),yA-hB/2,(s.hi-s.lo)*d.k,hB);c.strokeRect(d.X(s.lo),yB-hB/2,(s.hi-s.lo)*d.k,hB);c.setLineDash([]);
+  const lab=(t,xx,yy,al)=>txt(c,t,xx,yy,{size:13,al,col:COL.tenue});
+  if(d.X(s.lo)>150) lab('Σ fᵢ(xᵢ − x₁)',d.X(s.lo)-10,yA,'right'); else lab('Σ fᵢ(xᵢ − x₁)',d.X(s.hi)+10,yA,'left');
+  if(d.w-d.X(s.hi)>150) lab('Σ fᵢ(xₖ − xᵢ)',d.X(s.hi)+10,yB,'left'); else lab('Σ fᵢ(xₖ − xᵢ)',d.X(s.lo)-10,yB,'right');
+  txt(c,'x̄',d.X(s.m)+10,y+30,{col:COL.amarillo,size:17,al:'left'});
+  if(igual) txt(c,'un solo valor: x₁ = x̄ = xₖ, no hay desigualdad estricta',d.w/2,yB+34,{size:13,col:COL.rojo});
+},(px,py)=>hitPila(d1,px,py,126),(t,px)=>mueve(d1,t,px));
+
+// ---------- 2: desviaciones y balancín ----------
+const d2=lienzo('c2',(d,c)=>{
+  const s=st(); escala(d,0,10); const yb=112, p=S.p, Xp=d.X(p);
+  // balancín girado
+  c.save(); c.translate(Xp,yb); c.rotate(S.theta);
+  linea(c,d.X(0)-Xp,0,d.X(10)-Xp,0,'rgba(236,232,224,.8)',3);
+  S.pts.forEach((pt,i)=>pila(c,d.X(pt.x)-Xp,-1.5,pt.n,colorOf(i)));
+  c.restore();
+  // apoyo
+  const eq=Math.abs(s.m-p)<0.005;
+  fulcro(c,Xp,yb+2,eq?COL.amarillo:COL.tiza,20);
+  txt(c,'p',Xp,yb+34,{size:17,col:eq?COL.amarillo:COL.tiza});
+  // marca de la media en el suelo
+  linea(c,d.X(0),yb+24,d.X(10),yb+24,'rgba(139,138,166,.35)',1);
+  fulcro(c,d.X(s.m),yb+24,COL.amarillo,7,-1);
+  txt(c,'x̄',d.X(s.m)+9,yb+18,{size:13,col:COL.amarillo,al:'left'});
+  // desviaciones
+  const y0=yb+58, gap=Math.min(17,90/Math.max(1,S.pts.length));
+  linea(c,Xp,y0-8,Xp,y0+gap*S.pts.length,'rgba(236,232,224,.4)',1,[3,3]);
+  S.pts.forEach((pt,i)=>{const yy=y0+i*gap, dv=pt.x-p; if(Math.abs(dv)<1e-9) return;
+    flecha(c,Xp,yy,d.X(pt.x),yy,dv<0?COL.rojo:COL.azul,1+pt.n*0.9,6+pt.n);
+    c.beginPath();c.arc(d.X(pt.x),yy,3.5,0,7);c.fillStyle=colorOf(i);c.fill();});
+  // balanza de totales
+  let L=0,Rr=0; S.pts.forEach((pt,i)=>{const dv=s.f[i]*(pt.x-p); if(dv<0)L-=dv; else Rr+=dv;});
+  const yT=y0+gap*S.pts.length+34;
+  c.fillStyle='rgba(252,98,85,.85)'; c.fillRect(Xp-L*d.k,yT-8,L*d.k,16);
+  c.fillStyle='rgba(88,196,221,.85)'; c.fillRect(Xp,yT-8,Rr*d.k,16);
+  linea(c,Xp,yT-14,Xp,yT+14,COL.tiza,1.5);
+  txt(c,'Σ fᵢ(p − xᵢ) a la izquierda',Xp-L*d.k-8,yT,{size:12.5,al:'right',col:COL.rojo});
+  txt(c,'Σ fᵢ(xᵢ − p) a la derecha',Xp+Rr*d.k+8,yT,{size:12.5,al:'left',col:COL.azul});
+},(px,py)=>({t:'p'}),(t,px)=>{S.p=Math.round(Math.max(0,Math.min(10,d2.iX(px)))*100)/100;});
+
+// ---------- 3: transformación afín ----------
+function pasoBonito(r){const raw=r/8, e=Math.pow(10,Math.floor(Math.log10(raw))); for(const m of [1,2,5,10]) if(m*e>=raw) return m*e; return 10*e;}
+const d3=lienzo('c3',(d,c)=>{
+  const s=st(), a=S.ta, b=S.tb;
+  const ya=[b,10*a+b]; let lo=Math.min(0,...ya), hi=Math.max(10,...ya); const pad=(hi-lo)*0.04; lo-=pad; hi+=pad;
+  escala(d,lo,hi,40,40); const yt=90, yb2=270, paso=pasoBonito(hi-lo);
+  // centro de la homotecia
+  const t=Math.abs(1-a)>1e-6?1/(1-a):null;
+  let cen=null; if(t!==null){const cx=d.X(b/(1-a)), cy=yt+t*(yb2-yt); if(cy>-200&&cy<d.h+200) cen={cx,cy};}
+  S.pts.forEach((pt,i)=>{const x1=d.X(pt.x), x2=d.X(a*pt.x+b);
+    if(cen){linea(c,x1,yt,cen.cx,cen.cy,'rgba(169,166,188,.22)',1,[2,3]);}
+    linea(c,x1,yt,x2,yb2,colorOf(i),1.4);});
+  const ym=a*s.m+b;
+  if(cen) linea(c,d.X(s.m),yt,cen.cx,cen.cy,'rgba(244,211,94,.35)',1,[2,3]);
+  linea(c,d.X(s.m),yt,d.X(ym),yb2,COL.amarillo,2.2,[7,4]);
+  if(cen&&cen.cy>8&&cen.cy<d.h-8&&cen.cx>8&&cen.cx<d.w-8){c.beginPath();c.arc(cen.cx,cen.cy,4.5,0,7);c.fillStyle=COL.tiza;c.fill();
+    txt(c,'c',cen.cx+9,cen.cy-9,{size:15,al:'left'});}
+  // ejes
+  eje(c,d,yt,lo,hi,{paso}); eje(c,d,yb2,lo,hi,{paso});
+  linea(c,d.X(0),yt,d.X(10),yt,'rgba(236,232,224,.6)',2.2);
+  txt(c,'x',d.X(hi)+22,yt-12,{size:16}); txt(c,'y = ax + b',d.X(hi)+4,yb2-14,{size:15,al:'right'});
+  S.pts.forEach((pt,i)=>{pila(c,d.X(pt.x),yt,pt.n,colorOf(i),-1,5.5); pila(c,d.X(a*pt.x+b),yb2+20,pt.n,colorOf(i),1,5.5);});
+  fulcro(c,d.X(s.m),yt+2,COL.amarillo,13); fulcro(c,d.X(ym),yb2-2,COL.amarillo,13,-1);
+  txt(c,'x̄',d.X(s.m)+12,yt+12,{size:16,col:COL.amarillo,al:'left'});
+  txt(c,'ȳ = a x̄ + b',d.X(ym)+12,yb2-12,{size:16,col:COL.amarillo,al:'left'});
+  if(t===null) txt(c,'a = 1: traslación, rectas paralelas',d.w/2,d.h-14,{size:13,col:COL.tenue});
+  else if(a<0) txt(c,'a < 0: el orden se invierte y las rectas se cruzan entre los ejes',d.w/2,d.h-14,{size:13,col:COL.tenue});
+  else if(Math.abs(a)<1e-9) txt(c,'a = 0: todos los datos van a b',d.w/2,d.h-14,{size:13,col:COL.tenue});
+},null,null);
+
+// ---------- 4: cuadrados ----------
+const d4=lienzo('c4',(d,c)=>{
+  const s=st(); escala(d,0,10,22,22); const y=d.h-74, a=S.a, Xa=d.X(a);
+  c.save(); c.beginPath(); c.rect(0,0,d.w,y); c.clip();
+  const mx=Math.max(...s.f);
+  // cuadrados de lado |x_i - a|; la opacidad indica el peso f_i
+  S.pts.map((p,i)=>({p,i})).sort((u,v)=>Math.abs(v.p.x-a)-Math.abs(u.p.x-a)).forEach(({p,i})=>{
+    const L=(p.x-a)*d.k, x0=Math.min(Xa,Xa+L), sd=Math.abs(L);
+    c.fillStyle=colorOf(i); c.globalAlpha=0.10+0.32*s.f[i]/mx; c.fillRect(x0,y-sd,sd,sd);
+    c.globalAlpha=0.9; c.strokeStyle=colorOf(i); c.lineWidth=1.3; c.strokeRect(x0,y-sd,sd,sd); c.globalAlpha=1;
+  });
+  c.restore();
+  eje(c,d,y,0,10);
+  S.pts.forEach((p,i)=>pila(c,d.X(p.x),y+20,p.n,colorOf(i),1,4));
+  fulcro(c,d.X(s.m),y,COL.amarillo,10,1);
+  txt(c,'x̄',d.X(s.m)-9,y+12,{size:14,col:COL.amarillo,al:'right'});
+  const eq=Math.abs(a-s.m)<0.005;
+  linea(c,Xa,8,Xa,y,eq?COL.amarillo:COL.rojo,1.6);
+  c.beginPath();c.arc(Xa,y,6,0,7);c.fillStyle=eq?COL.amarillo:COL.rojo;c.fill();
+  txt(c,'a',Xa+8,14,{size:17,col:eq?COL.amarillo:COL.rojo,al:'left'});
+  txt(c,'cuadrados de lado |xᵢ − a| (más opacos, más peso)',10,d.h-7,{size:11.5,font:FN,ital:false,col:COL.gris,al:'left'});
+},(px,py)=>{const s=st(); const h=hitPila(d4,px,py,d4.h-74+20,1); return h||{t:'a'};},
+ (t,px)=>{ if(t.t==='pt') mueve(d4,t,px); else {animA=null; S.a=Math.round(Math.max(0,Math.min(10,d4.iX(px)))*100)/100;} });
+
+// ---------- 5: parábola M(a) ----------
+const M=(a,s)=>S.pts.reduce((acc,p,i)=>acc+s.f[i]*(p.x-a)**2,0);
+const d5=lienzo('c5',(d,c)=>{
+  const s=st(); escala(d,0,10,46,20);
+  const Mmax=Math.max(M(0,s),M(10,s))*1.05||1, y0=d.h-40, y1=26, Y=v=>y0-(v/Mmax)*(y0-y1);
+  // rejilla
+  for(let i=1;i<=4;i++){const v=Mmax*i/4; linea(c,d.X(0),Y(v),d.X(10),Y(v),'rgba(56,66,80,.6)',1);
+    txt(c,fmt(v,1),d.X(0)-6,Y(v),{size:10.5,font:FN,ital:false,col:COL.gris,al:'right'});}
+  eje(c,d,y0,0,10);
+  flecha(c,d.X(0),y0+6,d.X(0),y1-12,COL.tenue,1.1,7);
+  txt(c,'M(a) = Σ fᵢ(xᵢ − a)²',d.X(0)+8,y1-8,{size:14,al:'left'});
+  // s^2
+  linea(c,d.X(0),Y(s.v),d.X(10),Y(s.v),'rgba(131,193,103,.55)',1,[5,4]);
+  txt(c,'s²',d.X(10)-2,Y(s.v)-9,{size:15,col:COL.verde,al:'right'});
+  // curva
+  c.beginPath(); for(let k=0;k<=200;k++){const a=10*k/200; const px=d.X(a), py=Y(M(a,s)); k?c.lineTo(px,py):c.moveTo(px,py);}
+  c.strokeStyle=COL.tiza; c.lineWidth=2; c.stroke();
+  // descomposición en a
+  const a=S.a, Ma=M(a,s), Xa=d.X(a);
+  c.fillStyle='rgba(131,193,103,.85)'; c.fillRect(Xa-5,Y(s.v),10,y0-Y(s.v));
+  c.fillStyle='rgba(252,98,85,.9)'; c.fillRect(Xa-5,Y(Ma),10,Y(s.v)-Y(Ma));
+  if(Y(s.v)-Y(Ma)>14) txt(c,'(a − x̄)²',Xa+10,(Y(s.v)+Y(Ma))/2,{size:13,col:COL.rojo,al:'left'});
+  // mínimo
+  c.beginPath();c.arc(d.X(s.m),Y(s.v),5,0,7);c.fillStyle=COL.amarillo;c.fill();
+  linea(c,d.X(s.m),Y(s.v),d.X(s.m),y0,'rgba(244,211,94,.6)',1,[3,3]);
+  txt(c,'x̄',d.X(s.m),y0+28,{size:15,col:COL.amarillo});
+  const eq=Math.abs(a-s.m)<0.005;
+  c.beginPath();c.arc(Xa,Y(Ma),5.5,0,7);c.fillStyle=eq?COL.amarillo:COL.rojo;c.fill();c.strokeStyle=COL.tiza;c.lineWidth=1.2;c.stroke();
+},(px,py)=>({t:'a'}),(t,px)=>{animA=null; S.a=Math.round(Math.max(0,Math.min(10,d5.iX(px)))*100)/100;});
+
+// ---------- lecturas y controles ----------
+function lecturas(){
+  const s=st();
+  document.getElementById('l0').innerHTML=`<span>n = <b>${s.N}</b></span><span>k = <b>${S.pts.length}</b> valores</span><span>x̄ = <b>${fmt(s.m,3)}</b></span>`;
+  const igual=s.hi-s.lo<1e-9;
+  document.getElementById('l1').innerHTML=igual?`<span class="mal">x₁ = xₖ = ${fmt(s.lo)}: un solo valor, la media coincide con él</span>`:
+   `<span>x₁ = <b>${fmt(s.lo)}</b></span><span>x̄ − x₁ = <b class="ok">${fmt(s.m-s.lo,3)}</b> &gt; 0</span><span>xₖ − x̄ = <b class="ok">${fmt(s.hi-s.m,3)}</b> &gt; 0</span><span>xₖ = <b>${fmt(s.hi)}</b></span>`;
+  const T=s.m-S.p, eq=Math.abs(T)<0.005;
+  document.getElementById('l2').innerHTML=`<span>p = <b>${fmt(S.p)}</b></span><span>Σ fᵢ(xᵢ − p) = x̄ − p = <b class="${eq?'ok':'mal'}">${fmt(T,3)}</b></span><span>Σ nᵢ(xᵢ − p) = <b class="${eq?'ok':'mal'}">${fmt(T*s.N,3)}</b></span><span>${eq?'<b class="ok">equilibrio: p = x̄</b>':(T>0?'gira hacia la derecha':'gira hacia la izquierda')}</span>`;
+  const a=S.ta,b=S.tb, ybar=S.pts.reduce((acc,p,i)=>acc+s.f[i]*(a*p.x+b),0);
+  document.getElementById('l3').innerHTML=`<span>x̄ = <b>${fmt(s.m,3)}</b></span><span>Σ fᵢ yᵢ = <b>${fmt(ybar,3)}</b></span><span>a x̄ + b = <b class="ok">${fmt(a*s.m+b,3)}</b></span>${Math.abs(1-a)>1e-6?`<span>centro c = <b>${fmt(b/(1-a),2)}</b></span>`:''}`;
+  const Ma=M(S.a,s), eq4=Math.abs(S.a-s.m)<0.005;
+  document.getElementById('l4').innerHTML=`<span>a = <b class="${eq4?'ok':'mal'}">${fmt(S.a)}</b></span><span>M(a) = <b>${fmt(Ma,3)}</b></span><span>s² = M(x̄) = <b class="ok">${fmt(s.v,3)}</b></span><span>(a − x̄)² = <b class="${eq4?'ok':'mal'}">${fmt((S.a-s.m)**2,3)}</b></span>`;
+}
+function chips(){
+  const box=document.getElementById('chips'); box.innerHTML='';
+  S.pts.forEach((p,i)=>{
+    const el=document.createElement('div'); el.className='chip';
+    el.innerHTML=`<span class="pt" style="background:${colorOf(i)}"></span><span>x=${fmt(p.x)}</span><button aria-label="Restar frecuencia" data-op="-">−</button><span>n=${p.n}</span><button aria-label="Sumar frecuencia" data-op="+">+</button>${S.pts.length>1?'<button aria-label="Quitar valor" data-op="x">×</button>':''}`;
+    el.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{
+      const op=bt.dataset.op; if(op==='+') p.n=Math.min(8,p.n+1); else if(op==='-') p.n=Math.max(1,p.n-1); else S.pts.splice(i,1);
+      chips(); pinta();});
+    box.appendChild(el);
+  });
+}
+document.getElementById('bAdd').onclick=()=>{ if(S.pts.length>=7) return; S.pts.push({x:Math.round(Math.random()*180+10)/20,n:1+Math.floor(Math.random()*3)}); chips(); pinta(); };
+document.getElementById('bRand').onclick=()=>{ const k=3+Math.floor(Math.random()*3); S.pts=Array.from({length:k},()=>({x:Math.round(Math.random()*180+10)/20,n:1+Math.floor(Math.random()*4)})); chips(); pinta(); };
+document.getElementById('bIgual').onclick=()=>{ const s=st(); const v=Math.round(s.m*20)/20; S.pts.forEach(p=>p.x=v); chips(); pinta(); };
+document.getElementById('bEj').onclick=()=>{ S.pts=EJEMPLO.map(p=>({...p})); chips(); pinta(); };
+document.getElementById('bApoyo').onclick=()=>{ S.p=Math.round(st().m*100)/100; pinta(); };
+document.getElementById('bMin').onclick=()=>{ animA=st().m; pinta(); };
+const sa=document.getElementById('sa'), sb=document.getElementById('sb');
+const actT=()=>{S.ta=+sa.value;S.tb=+sb.value;document.getElementById('va').textContent=fmt(S.ta);document.getElementById('vb').textContent=fmt(S.tb,1);pinta();};
+sa.oninput=actT; sb.oninput=actT;
+
+// ---------- bucle ----------
+const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let sucio=true;
+function pinta(){sucio=true;}
+function frame(){
+  const s=st();
+  const objetivo=Math.max(-0.22,Math.min(0.22,(s.m-S.p)*0.09));
+  if(Math.abs(objetivo-S.theta)>1e-4){S.theta=reduce?objetivo:S.theta+(objetivo-S.theta)*0.12; sucio=true;}
+  if(animA!==null){S.a=reduce?animA:S.a+(animA-S.a)*0.15; if(Math.abs(S.a-animA)<0.002){S.a=animA;animA=null;} sucio=true;}
+  if(sucio){sucio=false; for(const d of defs){ajusta(d); d.ctx.clearRect(0,0,d.w,d.h); try{d.draw(d,d.ctx);}catch(e){console.error(e);} } lecturas();}
+  requestAnimationFrame(frame);
+}
+window.addEventListener('resize',pinta);
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(pinta);
+chips(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
